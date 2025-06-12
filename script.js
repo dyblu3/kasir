@@ -21,7 +21,6 @@ let currentTransaction = {
   cashReceived: 0,
   change: 0,
   discount: 0,
-  tax: 0,
   subtotal: 0,
   total: 0,
   timestamp: ''
@@ -35,8 +34,6 @@ const productList = document.getElementById('product-list');
 const cartItems = document.getElementById('cart-items');
 const emptyCartMessage = document.getElementById('empty-cart-message');
 const subtotalElement = document.getElementById('subtotal');
-const discountElement = document.getElementById('discount');
-const taxElement = document.getElementById('tax');
 const totalElement = document.getElementById('total');
 const customerNameInput = document.getElementById('customer-name');
 const clearCustomerBtn = document.getElementById('clear-customer');
@@ -57,6 +54,8 @@ const printReceiptBtn = document.getElementById('print-receipt');
 const closeReceiptBtn = document.getElementById('close-receipt');
 const currentTimeElement = document.getElementById('current-time');
 const currentDateElement = document.getElementById('current-date');
+// New element for discount percentage setting
+const discountInput = document.getElementById('discount-input');
 
 // Initialize the application
 function init() {
@@ -67,6 +66,8 @@ function init() {
   // Event listeners
   paymentMethodSelect.addEventListener('change', updatePaymentFields);
   cashReceivedInput.addEventListener('input', updateChange);
+  discountInput.addEventListener('input', updateSummary);
+  
   clearCustomerBtn.addEventListener('click', () => {
       customerNameInput.value = '';
       currentTransaction.customer = '';
@@ -75,7 +76,6 @@ function init() {
   processPaymentBtn.addEventListener('click', processPayment);
   searchProductInput.addEventListener('input', renderProducts);
   addProductBtn.addEventListener('click', () => {
-      // Set the modal for adding a new product
       editingProductId = null;
       resetProductModal();
       productModal.classList.remove('hidden');
@@ -84,7 +84,6 @@ function init() {
   cancelProductBtn.addEventListener('click', () => productModal.classList.add('hidden'));
   printReceiptBtn.addEventListener('click', printReceipt);
   closeReceiptBtn.addEventListener('click', () => receiptModal.classList.add('hidden'));
-  
   customerNameInput.addEventListener('change', (e) => {
       currentTransaction.customer = e.target.value;
   });
@@ -131,22 +130,18 @@ function renderProducts() {
               </button>
           </div>
       `;
-      // Clicking the card (except buttons) will add product to cart
       productCard.addEventListener('click', (e) => {
-          // Avoid add-to-cart if clicking on edit/delete buttons
           if (e.target.closest('.edit-product-btn') || e.target.closest('.delete-product-btn')) {
               return;
           }
           addToCart(product);
       });
       
-      // Edit button event listener
       productCard.querySelector('.edit-product-btn').addEventListener('click', (e) => {
           e.stopPropagation();
           editProduct(product);
       });
       
-      // Delete button event listener
       productCard.querySelector('.delete-product-btn').addEventListener('click', (e) => {
           e.stopPropagation();
           deleteProduct(product.id);
@@ -169,7 +164,6 @@ function getProductIcon(category) {
 
 // Add product to cart
 function addToCart(product) {
-  // Check if product is already in cart
   const existingItem = currentTransaction.items.find(item => item.id === product.id);
   
   if (existingItem) {
@@ -194,13 +188,11 @@ function addToCart(product) {
 // Edit product - open modal populated with product details
 function editProduct(product) {
   editingProductId = product.id;
-  // Populate the modal fields with the product's existing details
   document.getElementById('product-name').value = product.name;
   document.getElementById('product-category').value = product.category;
   document.getElementById('product-price').value = product.price;
   document.getElementById('product-stock').value = product.stock;
   document.getElementById('product-barcode').value = product.barcode;
-  // Optionally modify modal title and save button text
   document.getElementById('modal-title').innerHTML = `<i class="fas fa-edit mr-2 text-blue-500"></i>Edit Product`;
   saveProductBtn.textContent = "Update Product";
   productModal.classList.remove('hidden');
@@ -233,13 +225,11 @@ function saveProduct() {
   const stock = parseInt(document.getElementById('product-stock').value);
   const barcode = document.getElementById('product-barcode').value.trim();
   
-  // Simple validation
   if (!name || isNaN(price) || price <= 0 || isNaN(stock) || stock <= 0 || !barcode) {
       alert('Please fill all fields with valid values!');
       return;
   }
   
-  // Check if barcode exists in another product (if adding new or editing to a barcode already set to a different product)
   const barcodeExists = products.some(p => p.barcode === barcode && p.id !== editingProductId);
   if (barcodeExists) {
       alert('Product with this barcode already exists!');
@@ -247,7 +237,6 @@ function saveProduct() {
   }
   
   if (editingProductId) {
-      // Update existing product
       products = products.map(p => {
           if (p.id === editingProductId) {
               return { ...p, name, category, price, stock, barcode };
@@ -255,7 +244,6 @@ function saveProduct() {
           return p;
       });
   } else {
-      // Create new product
       const newProduct = {
           id: products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1,
           name,
@@ -309,7 +297,6 @@ function updateCart() {
       cartItems.appendChild(cartItem);
   });
   
-  // Add event listeners to buttons
   document.querySelectorAll('.decrease-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const productId = parseInt(e.target.getAttribute('data-id'));
@@ -367,18 +354,18 @@ function removeFromCart(productId) {
   updateCart();
 }
 
-// Update transaction summary
+// Update transaction summary using discount percentage
 function updateSummary() {
   currentTransaction.subtotal = currentTransaction.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  currentTransaction.tax = currentTransaction.subtotal * 0.1; // 10% tax
-  currentTransaction.total = currentTransaction.subtotal + currentTransaction.tax - currentTransaction.discount;
+  const discountPercentage = parseFloat(discountInput.value) || 0;
+  // Calculate discount amount as a percentage of the subtotal
+  const discountAmount = currentTransaction.subtotal * (discountPercentage / 100);
+  currentTransaction.discount = discountAmount;
+  currentTransaction.total = currentTransaction.subtotal - discountAmount;
   
   subtotalElement.textContent = `Rp ${currentTransaction.subtotal.toLocaleString()}`;
-  discountElement.textContent = `Rp ${currentTransaction.discount.toLocaleString()}`;
-  taxElement.textContent = `Rp ${currentTransaction.tax.toLocaleString()}`;
   totalElement.textContent = `Rp ${currentTransaction.total.toLocaleString()}`;
   
-  // Update cash received and change if necessary
   if (currentTransaction.paymentMethod === 'cash') {
       updateChange();
   }
@@ -404,7 +391,6 @@ function updatePaymentFields() {
 function updateChange() {
   const cashReceived = parseFloat(cashReceivedInput.value) || 0;
   const change = cashReceived - currentTransaction.total;
-  
   currentTransaction.cashReceived = cashReceived;
   
   if (change >= 0) {
@@ -428,15 +414,12 @@ function processPayment() {
       return;
   }
   
-  // Update timestamp
   const now = new Date();
   currentTransaction.timestamp = now.toLocaleString();
   
-  // Create a transaction copy to save to history
   const transaction = JSON.parse(JSON.stringify(currentTransaction));
   transaction.id = transactions.length + 1;
   
-  // Update product stock
   transaction.items.forEach(item => {
       const product = products.find(p => p.id === item.id);
       if (product) {
@@ -444,18 +427,13 @@ function processPayment() {
       }
   });
   
-  // Add to transactions history
   transactions.unshift(transaction);
   renderTransactionHistory();
-  
-  // Show receipt
   showReceipt(transaction);
-  
-  // Reset current transaction
   resetTransaction();
 }
 
-// Reset current transaction
+// Reset current transaction and input fields
 function resetTransaction() {
   currentTransaction = {
       items: [],
@@ -464,7 +442,6 @@ function resetTransaction() {
       cashReceived: 0,
       change: 0,
       discount: 0,
-      tax: 0,
       subtotal: 0,
       total: 0,
       timestamp: ''
@@ -474,6 +451,7 @@ function resetTransaction() {
   paymentMethodSelect.value = 'cash';
   cashReceivedInput.value = '';
   customerChangeInput.value = '';
+  discountInput.value = '0';
   
   updateCart();
   updatePaymentFields();
@@ -512,7 +490,6 @@ function renderTransactionHistory() {
       transactionHistory.appendChild(tr);
   });
   
-  // Add event listeners to view receipt buttons
   document.querySelectorAll('.view-receipt-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const transactionId = parseInt(e.target.getAttribute('data-id'));
@@ -520,7 +497,6 @@ function renderTransactionHistory() {
       });
   });
   
-  // Add event listeners to refund buttons
   document.querySelectorAll('.refund-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const transactionId = parseInt(e.target.getAttribute('data-id'));
@@ -529,7 +505,7 @@ function renderTransactionHistory() {
   });
 }
 
-// Show receipt modal
+// Show receipt modal with transaction details
 function showReceipt(transaction) {
   const receiptElement = document.getElementById('receipt-to-print');
   receiptElement.innerHTML = `
@@ -578,11 +554,7 @@ function showReceipt(transaction) {
           </div>
           <div class="flex justify-between">
               <span>Discount:</span>
-              <span>Rp ${transaction.discount.toLocaleString()}</span>
-          </div>
-          <div class="flex justify-between">
-              <span>Tax (10%):</span>
-              <span>Rp ${transaction.tax.toLocaleString()}</span>
+              <span>${(discountInput.value)}% (Rp ${transaction.discount.toLocaleString()})</span>
           </div>
           <div class="flex justify-between font-bold border-t mt-1 pt-1">
               <span>TOTAL:</span>
@@ -624,16 +596,12 @@ function refundTransaction(transactionId) {
   const transactionIndex = transactions.findIndex(t => t.id === transactionId);
   if (transactionIndex !== -1) {
       const transaction = transactions[transactionIndex];
-      
-      // Restore product stock
       transaction.items.forEach(item => {
           const product = products.find(p => p.id === item.id);
           if (product) {
               product.stock += item.quantity;
           }
       });
-      
-      // Remove from transactions
       transactions.splice(transactionIndex, 1);
       renderTransactionHistory();
       renderProducts();
@@ -658,5 +626,4 @@ function updateDateTime() {
   });
 }
 
-// Initialize the app
 document.addEventListener('DOMContentLoaded', init);
