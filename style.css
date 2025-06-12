@@ -1,4 +1,3 @@
-/* Custom styles for receipt printer */
 @media print {
   body * {
     visibility: hidden;
@@ -10,11 +9,10 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 58mm; /* Standard receipt width */
+    width: 58mm;
   }
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
