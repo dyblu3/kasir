@@ -10,8 +10,10 @@ let products = [
   { id: 8, name: 'Cheeseburger', category: 'food', price: 35000, stock: 18, barcode: '8901234567' },
 ];
 
+// Global variable to track if a product is being edited
 let editingProductId = null;
 
+// Current transaction data
 let currentTransaction = {
   items: [],
   customer: '',
@@ -24,8 +26,10 @@ let currentTransaction = {
   timestamp: ''
 };
 
+// Transaction history
 let transactions = [];
 
+// DOM elements
 const productList = document.getElementById('product-list');
 const cartItems = document.getElementById('cart-items');
 const emptyCartMessage = document.getElementById('empty-cart-message');
@@ -36,8 +40,6 @@ const clearCustomerBtn = document.getElementById('clear-customer');
 const paymentMethodSelect = document.getElementById('payment-method');
 const cashReceivedInput = document.getElementById('cash-received');
 const customerChangeInput = document.getElementById('customer-change');
-const cashReceivedWrap = document.getElementById('cash-received-wrap');
-const customerChangeWrap = document.getElementById('customer-change-wrap');
 const cancelTransactionBtn = document.getElementById('cancel-transaction');
 const processPaymentBtn = document.getElementById('process-payment');
 const transactionHistory = document.getElementById('transaction-history');
@@ -52,17 +54,20 @@ const printReceiptBtn = document.getElementById('print-receipt');
 const closeReceiptBtn = document.getElementById('close-receipt');
 const currentTimeElement = document.getElementById('current-time');
 const currentDateElement = document.getElementById('current-date');
+// New element for discount percentage setting
 const discountInput = document.getElementById('discount-input');
 
+// Initialize the application
 function init() {
   renderProducts();
   updateDateTime();
   setInterval(updateDateTime, 1000);
-
+  
+  // Event listeners
   paymentMethodSelect.addEventListener('change', updatePaymentFields);
   cashReceivedInput.addEventListener('input', updateChange);
   discountInput.addEventListener('input', updateSummary);
-
+  
   clearCustomerBtn.addEventListener('click', () => {
       customerNameInput.value = '';
       currentTransaction.customer = '';
@@ -82,19 +87,18 @@ function init() {
   customerNameInput.addEventListener('change', (e) => {
       currentTransaction.customer = e.target.value;
   });
-
-  updatePaymentFields();
 }
 
+// Render products to the UI with edit and delete options
 function renderProducts() {
   productList.innerHTML = '';
   const searchTerm = searchProductInput.value.toLowerCase();
-
+  
   const filteredProducts = products.filter(product => 
       product.name.toLowerCase().includes(searchTerm) || 
       product.barcode.includes(searchTerm)
   );
-
+  
   if (filteredProducts.length === 0) {
       productList.innerHTML = `
           <div class="col-span-full text-center py-10 text-gray-500">
@@ -104,7 +108,7 @@ function renderProducts() {
       `;
       return;
   }
-
+  
   filteredProducts.forEach(product => {
       const productCard = document.createElement('div');
       productCard.className = 'flex flex-col items-center bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-blue-50 transition-colors';
@@ -132,21 +136,22 @@ function renderProducts() {
           }
           addToCart(product);
       });
-
+      
       productCard.querySelector('.edit-product-btn').addEventListener('click', (e) => {
           e.stopPropagation();
           editProduct(product);
       });
-
+      
       productCard.querySelector('.delete-product-btn').addEventListener('click', (e) => {
           e.stopPropagation();
           deleteProduct(product.id);
       });
-
+      
       productList.appendChild(productCard);
   });
 }
 
+// Get appropriate icon for product category
 function getProductIcon(category) {
   const icons = {
       'food': '<i class="fas fa-utensils text-blue-500"></i>',
@@ -157,9 +162,10 @@ function getProductIcon(category) {
   return icons[category] || icons['other'];
 }
 
+// Add product to cart
 function addToCart(product) {
   const existingItem = currentTransaction.items.find(item => item.id === product.id);
-
+  
   if (existingItem) {
       if (existingItem.quantity < product.stock) {
           existingItem.quantity += 1;
@@ -175,10 +181,11 @@ function addToCart(product) {
           quantity: 1
       });
   }
-
+  
   updateCart();
 }
 
+// Edit product - open modal populated with product details
 function editProduct(product) {
   editingProductId = product.id;
   document.getElementById('product-name').value = product.name;
@@ -191,6 +198,7 @@ function editProduct(product) {
   productModal.classList.remove('hidden');
 }
 
+// Delete product after confirmation
 function deleteProduct(productId) {
   if (confirm('Are you sure you want to delete this product?')) {
       products = products.filter(p => p.id !== productId);
@@ -198,6 +206,7 @@ function deleteProduct(productId) {
   }
 }
 
+// Reset product modal to default state for adding a new product
 function resetProductModal() {
   document.getElementById('product-name').value = '';
   document.getElementById('product-category').value = 'food';
@@ -208,24 +217,25 @@ function resetProductModal() {
   saveProductBtn.textContent = "Save Product";
 }
 
+// Save new product or update an existing product
 function saveProduct() {
   const name = document.getElementById('product-name').value.trim();
   const category = document.getElementById('product-category').value;
   const price = parseFloat(document.getElementById('product-price').value);
   const stock = parseInt(document.getElementById('product-stock').value);
   const barcode = document.getElementById('product-barcode').value.trim();
-
+  
   if (!name || isNaN(price) || price <= 0 || isNaN(stock) || stock <= 0 || !barcode) {
       alert('Please fill all fields with valid values!');
       return;
   }
-
+  
   const barcodeExists = products.some(p => p.barcode === barcode && p.id !== editingProductId);
   if (barcodeExists) {
       alert('Product with this barcode already exists!');
       return;
   }
-
+  
   if (editingProductId) {
       products = products.map(p => {
           if (p.id === editingProductId) {
@@ -244,22 +254,23 @@ function saveProduct() {
       };
       products.unshift(newProduct);
   }
-
+  
   productModal.classList.add('hidden');
   renderProducts();
 }
 
+// Update cart UI
 function updateCart() {
   cartItems.innerHTML = '';
-
+  
   if (currentTransaction.items.length === 0) {
       emptyCartMessage.classList.remove('hidden');
       updateSummary();
       return;
   }
-
+  
   emptyCartMessage.classList.add('hidden');
-
+  
   currentTransaction.items.forEach(item => {
       const cartItem = document.createElement('div');
       cartItem.className = 'flex justify-between items-center py-2 border-b';
@@ -285,31 +296,32 @@ function updateCart() {
       `;
       cartItems.appendChild(cartItem);
   });
-
+  
   document.querySelectorAll('.decrease-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const productId = parseInt(e.target.getAttribute('data-id'));
           decreaseQuantity(productId);
       });
   });
-
+  
   document.querySelectorAll('.increase-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const productId = parseInt(e.target.getAttribute('data-id'));
           increaseQuantity(productId);
       });
   });
-
+  
   document.querySelectorAll('.remove-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const productId = parseInt(e.target.getAttribute('data-id'));
           removeFromCart(productId);
       });
   });
-
+  
   updateSummary();
 }
 
+// Decrease product quantity in cart
 function decreaseQuantity(productId) {
   const item = currentTransaction.items.find(item => item.id === productId);
   if (item) {
@@ -322,6 +334,7 @@ function decreaseQuantity(productId) {
   }
 }
 
+// Increase product quantity in cart
 function increaseQuantity(productId) {
   const item = currentTransaction.items.find(item => item.id === productId);
   if (item) {
@@ -335,48 +348,51 @@ function increaseQuantity(productId) {
   }
 }
 
+// Remove product from cart
 function removeFromCart(productId) {
   currentTransaction.items = currentTransaction.items.filter(item => item.id !== productId);
   updateCart();
 }
 
+// Update transaction summary using discount percentage
 function updateSummary() {
   currentTransaction.subtotal = currentTransaction.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const discountPercentage = parseFloat(discountInput.value) || 0;
+  // Calculate discount amount as a percentage of the subtotal
   const discountAmount = currentTransaction.subtotal * (discountPercentage / 100);
   currentTransaction.discount = discountAmount;
   currentTransaction.total = currentTransaction.subtotal - discountAmount;
-
+  
   subtotalElement.textContent = `Rp ${currentTransaction.subtotal.toLocaleString()}`;
   totalElement.textContent = `Rp ${currentTransaction.total.toLocaleString()}`;
-
+  
   if (currentTransaction.paymentMethod === 'cash') {
       updateChange();
   }
 }
 
+// Update payment fields based on payment method
 function updatePaymentFields() {
   currentTransaction.paymentMethod = paymentMethodSelect.value;
+  
   if (currentTransaction.paymentMethod === 'cash') {
-      cashReceivedWrap.style.display = '';
-      customerChangeWrap.style.display = '';
       cashReceivedInput.disabled = false;
       cashReceivedInput.value = '';
       customerChangeInput.value = '';
       updateChange();
   } else {
-      cashReceivedWrap.style.display = 'none';
-      customerChangeWrap.style.display = 'none';
-      cashReceivedInput.value = '';
-      customerChangeInput.value = '';
+      cashReceivedInput.disabled = true;
+      cashReceivedInput.value = currentTransaction.total.toFixed(2);
+      customerChangeInput.value = '0';
   }
 }
 
+// Update customer change
 function updateChange() {
   const cashReceived = parseFloat(cashReceivedInput.value) || 0;
   const change = cashReceived - currentTransaction.total;
   currentTransaction.cashReceived = cashReceived;
-
+  
   if (change >= 0) {
       customerChangeInput.value = change.toFixed(2);
       currentTransaction.change = change;
@@ -386,36 +402,38 @@ function updateChange() {
   }
 }
 
+// Process payment
 function processPayment() {
   if (currentTransaction.items.length === 0) {
       alert('Please add items to the cart first!');
       return;
   }
-
+  
   if (currentTransaction.paymentMethod === 'cash' && currentTransaction.cashReceived < currentTransaction.total) {
       alert('Cash received is less than total amount!');
       return;
   }
-
+  
   const now = new Date();
   currentTransaction.timestamp = now.toLocaleString();
-
+  
   const transaction = JSON.parse(JSON.stringify(currentTransaction));
   transaction.id = transactions.length + 1;
-
+  
   transaction.items.forEach(item => {
       const product = products.find(p => p.id === item.id);
       if (product) {
           product.stock -= item.quantity;
       }
   });
-
+  
   transactions.unshift(transaction);
   renderTransactionHistory();
   showReceipt(transaction);
   resetTransaction();
 }
 
+// Reset current transaction and input fields
 function resetTransaction() {
   currentTransaction = {
       items: [],
@@ -428,27 +446,28 @@ function resetTransaction() {
       total: 0,
       timestamp: ''
   };
-
+  
   customerNameInput.value = '';
   paymentMethodSelect.value = 'cash';
   cashReceivedInput.value = '';
   customerChangeInput.value = '';
   discountInput.value = '0';
-
+  
   updateCart();
   updatePaymentFields();
 }
 
+// Render transaction history
 function renderTransactionHistory() {
   transactionHistory.innerHTML = '';
-
+  
   if (transactions.length === 0) {
       emptyTransactions.classList.remove('hidden');
       return;
   }
-
+  
   emptyTransactions.classList.add('hidden');
-
+  
   transactions.forEach(transaction => {
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-gray-50';
@@ -470,14 +489,14 @@ function renderTransactionHistory() {
       `;
       transactionHistory.appendChild(tr);
   });
-
+  
   document.querySelectorAll('.view-receipt-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const transactionId = parseInt(e.target.getAttribute('data-id'));
           viewReceipt(transactionId);
       });
   });
-
+  
   document.querySelectorAll('.refund-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
           const transactionId = parseInt(e.target.getAttribute('data-id'));
@@ -486,6 +505,7 @@ function renderTransactionHistory() {
   });
 }
 
+// Show receipt modal with transaction details
 function showReceipt(transaction) {
   const receiptElement = document.getElementById('receipt-to-print');
   receiptElement.innerHTML = `
@@ -557,10 +577,11 @@ function showReceipt(transaction) {
           <p class="text-xs mt-2">*** This is an computer-generated receipt ***</p>
       </div>
   `;
-
+  
   receiptModal.classList.remove('hidden');
 }
 
+// View receipt from history
 function viewReceipt(transactionId) {
   const transaction = transactions.find(t => t.id === transactionId);
   if (transaction) {
@@ -568,9 +589,10 @@ function viewReceipt(transactionId) {
   }
 }
 
+// Refund transaction
 function refundTransaction(transactionId) {
   if (!confirm('Are you sure you want to refund this transaction?')) return;
-
+  
   const transactionIndex = transactions.findIndex(t => t.id === transactionId);
   if (transactionIndex !== -1) {
       const transaction = transactions[transactionIndex];
@@ -587,10 +609,12 @@ function refundTransaction(transactionId) {
   }
 }
 
+// Print receipt
 function printReceipt() {
   window.print();
 }
 
+// Update date and time display
 function updateDateTime() {
   const now = new Date();
   currentTimeElement.textContent = now.toLocaleTimeString();
