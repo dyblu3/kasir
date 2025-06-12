@@ -1,0 +1,30 @@
+/* Custom styles for receipt printer */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-to-print, #receipt-to-print * {
+    visibility: visible;
+  }
+  #receipt-to-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm; /* Standard receipt width */
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern POS System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Link to external CSS file -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-4 max-w-7xl">
+    <header class="bg-blue-600 text-white p-4 rounded-t-lg shadow-md">
+      <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">
+          <i class="fas fa-cash-register mr-2"></i>Smart POS System
+        </h1>
+        <div class="text-right">
+          <div id="current-time" class="text-sm"></div>
+          <div id="current-date" class="text-xs opacity-80"></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+      <!-- Products Section -->
+      <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-gray-700">
+            <i class="fas fa-boxes mr-2 text-blue-500"></i>Products
+          </h2>
+          <div class="flex space-x-2">
+            <input type="text" id="search-product" placeholder="Search products..." 
+                   class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button id="add-product-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+              <i class="fas fa-plus mr-1"></i> Add
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 h-96 overflow-y-auto p-2" id="product-list">
+          <!-- Product items will be added here dynamically -->
+        </div>
+      </div>
+
+      <!-- Cart Section -->
+      <div class="bg-white rounded-lg shadow-md p-4">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">
+          <i class="fas fa-shopping-cart mr-2 text-blue-500"></i>Transaction
+        </h2>
+        
+        <!-- Customer Info -->
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <label for="customer-name" class="text-sm font-medium text-gray-700">Customer</label>
+            <button id="clear-customer" class="text-xs text-gray-500 hover:text-gray-700">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+          <input type="text" id="customer-name" placeholder="Customer name" 
+                 class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        
+        <!-- Cart Items -->
+        <div class="border rounded-lg p-2 mb-3 h-48 overflow-y-auto" id="cart-items">
+          <div class="text-center text-gray-500 py-10" id="empty-cart-message">
+            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+            <p>Your cart is empty</p>
+          </div>
+          <!-- Cart items will be added here dynamically -->
+        </div>
+        
+        <!-- Summary -->
+        <div class="bg-gray-50 rounded-lg p-3 mb-4">
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-gray-600">Subtotal:</span>
+            <span id="subtotal">Rp 0</span>
+          </div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-gray-600">Discount:</span>
+            <span id="discount">Rp 0</span>
+          </div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-gray-600">Tax (10%):</span>
+            <span id="tax">Rp 0</span>
+          </div>
+          <div class="flex justify-between font-semibold border-t pt-2 mt-2">
+            <span>Total:</span>
+            <span id="total">Rp 0</span>
+          </div>
+        </div>
+        
+        <!-- Payment Controls -->
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <select id="payment-method" class="col-span-2 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="cash">Cash</option>
+            <option value="debit">Debit Card</option>
+            <option value="credit">Credit Card</option>
+            <option value="transfer">Bank Transfer</option>
+          </select>
+          <input type="number" id="cash-received" placeholder="Cash received" 
+                 class="border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="number" id="customer-change" placeholder="Change" disabled
+                 class="border rounded-lg p-2 bg-gray-100">
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2">
+          <button id="cancel-transaction" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg">
+            <i class="fas fa-times mr-1"></i> Cancel
+          </button>
+          <button id="process-payment" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+            <i class="fas fa-check mr-1"></i> Pay
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="bg-white rounded-lg shadow-md p-4 mt-4">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">
+        <i class="fas fa-history mr-2 text-blue-500"></i>Today's Transactions
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200" id="transaction-history">
+            <!-- Transaction history will be added here dynamically -->
+            <tr id="empty-transactions">
+              <td colspan="7" class="px-6 py-4 text-center text-gray-500">No transactions today</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <!-- Add Product Modal -->
+  <div id="product-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+          </div>
+          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                      <i class="fas fa-plus-circle mr-2 text-blue-500"></i>Add New Product
+                  </h3>
+                  <div class="grid grid-cols-1 gap-4">
+                      <div>
+                          <label for="product-name" class="block text-sm font-medium text-gray-700">Product Name</label>
+                          <input type="text" id="product-name" class="mt-1 p-2 border rounded-md w-full">
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                          <div>
+                              <label for="product-category" class="block text-sm font-medium text-gray-700">Category</label>
+                              <select id="product-category" class="mt-1 p-2 border rounded-md w-full">
+                                  <option value="food">Food</option>
+                                  <option value="drink">Drink</option>
+                                  <option value="snack">Snack</option>
+                                  <option value="other">Other</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label for="product-price" class="block text-sm font-medium text-gray-700">Price</label>
+                              <input type="number" id="product-price" class="mt-1 p-2 border rounded-md w-full">
+                          </div>
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                          <div>
+                              <label for="product-stock" class="block text-sm font-medium text-gray-700">Stock</label>
+                              <input type="number" id="product-stock" class="mt-1 p-2 border rounded-md w-full">
+                          </div>
+                          <div>
+                              <label for="product-barcode" class="block text-sm font-medium text-gray-700">Barcode</label>
+                              <input type="text" id="product-barcode" class="mt-1 p-2 border rounded-md w-full">
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button id="save-product" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                      Save Product
+                  </button>
+                  <button id="cancel-product" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                      Cancel
+                  </button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div id="receipt-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+          </div>
+          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+          <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                      <i class="fas fa-receipt mr-2 text-blue-500"></i>Transaction Receipt
+                  </h3>
+                  <div id="receipt-to-print" class="text-xs font-mono">
+                      <!-- Receipt content will be added here -->
+                  </div>
+              </div>
+              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button id="print-receipt" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                      <i class="fas fa-print mr-2"></i> Print Receipt
+                  </button>
+                  <button id="close-receipt" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                      Close
+                  </button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Script file -->
+  <script src="script.js"></script>
+</body>
+</html>
